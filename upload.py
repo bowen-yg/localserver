@@ -1,33 +1,33 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import time
-# 创建自定义的请求处理类
-class FileUploadHandler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        num=0
-        start_time = time.time()
-        content_length = int(self.headers['Content-Length'])
-        # 读取客户端发送的二进制文件数据
-        file_data = self.rfile.read(content_length)
-        # 在这里可以对接收到的文件数据进行处理，例如保存到磁盘
-        with open('file.bin', 'wb') as file:
-            file.write(file_data)
+from flask import Flask, request, render_template
+import os
 
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b'File uploaded successfully.')
+app = Flask(__name__)
 
-        end_time = time.time()
-        time_elapsed_ms = int((end_time - start_time) * 1000)
-        print(f"Update in {time_elapsed_ms} ms")
+UPLOAD_FOLDER = './uploaded_files/'  # 指定上传文件夹
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'md', 'py', 'js', 'java', 'c', 'h', 'mp4'}  # 允许的文件扩展名
 
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# 启动服务器
-def run_server():
-    server_address = ('10.67.35.219', 8000)  # 可以根据需要修改端口号
-    httpd = HTTPServer(server_address, FileUploadHandler)
-    print('Server running on port 8000...')
-    httpd.serve_forever()
+@app.route('/', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        # 检查是否有文件在请求中
+        if 'file' not in request.files:
+            return '没有文件部分'
+        file = request.files['file']
+        # 如果用户没有选择文件，浏览器也会
+        # 提交一个没有文件名的空部分
+        if file.filename == '':
+            return '没有选择文件'
+        if file and allowed_file(file.filename):
+            filename = file.filename
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            return '文件上传成功'
+        else:
+            return '不允许的文件类型'
+    return render_template('./index.html')
 
-
-# 运行服务器
-run_server()
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)
