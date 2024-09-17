@@ -1,7 +1,9 @@
+
 from flask import Flask, request, render_template
 import os
 
 app = Flask(__name__)
+
 
 UPLOAD_FOLDER = './uploaded_files/'  # 指定上传文件夹
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'md', 'py', 'js', 'java', 'c', 'h', 'mp4'}  # 允许的文件扩展名
