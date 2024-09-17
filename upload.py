@@ -1,49 +1,35 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
+
+from flask import Flask, request, render_template
 import os
-import time
-import cgi
 
-# 创建自定义的请求处理类
-class FileUploadHandler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        start_time = time.time()
-        content_type, pdict = cgi.parse_header(self.headers['Content-Type'])
-        
-        if content_type == 'multipart/form-data':
-            pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
-            pdict['CONTENT-LENGTH'] = int(self.headers['Content-Length'])
-            fields = cgi.parse_multipart(self.rfile, pdict)
-            uploaded_file = fields.get('file')[0]
-            file_name = fields.get('file')[1]
-            
-            # 创建存储上传文件的目录
-            upload_dir = 'uploaded_files'
-            if not os.path.exists(upload_dir):
-                os.makedirs(upload_dir)
-            
-            # 保存文件到指定目录
-            file_path = os.path.join(upload_dir, file_name)
-            with open(file_path, 'wb') as file:
-                file.write(uploaded_file)
-            
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b'File uploaded successfully.')
+app = Flask(__name__)
+
+
+UPLOAD_FOLDER = './uploaded_files/'  # 指定上传文件夹
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'md', 'py', 'js', 'java', 'c', 'h', 'mp4'}  # 允许的文件扩展名
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        # 检查是否有文件在请求中
+        if 'file' not in request.files:
+            return '没有文件部分'
+        file = request.files['file']
+        # 如果用户没有选择文件，浏览器也会
+        # 提交一个没有文件名的空部分
+        if file.filename == '':
+            return '没有选择文件'
+        if file and allowed_file(file.filename):
+            filename = file.filename
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            return '文件上传成功'
         else:
-            self.send_response(400)
-            self.end_headers()
-            self.wfile.write(b'Invalid content type.')
+            return '不允许的文件类型'
+    return render_template('./index.html')
 
-        end_time = time.time()
-        time_elapsed_ms = int((end_time - start_time) * 1000)
-        print(f"Update in {time_elapsed_ms} ms")
-
-# 启动服务器
-def run_server():
-    server_address = ('10.67.35.219', 8000)  # 可以根据需要修改端口号
-    httpd = HTTPServer(server_address, FileUploadHandler)
-    print('Server running on port 8000...')
-    httpd.serve_forever()
-
-# 运行服务器
-run_server()
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)
