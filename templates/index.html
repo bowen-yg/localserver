@@ -1,13 +1,80 @@
 <!doctype html>
 <html>
 <head>
-  <title>上传新文件</title>
+  <title>文件上传</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">  <!-- 视口元标签 -->
+  <style>
+    /* 允许的文件类型样式 */
+    .allow_file_type_ul {
+      display: flex;
+      padding: 0;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .allow_file_type_ul li {
+      list-style: none;
+      margin: 0 5px 5px 0;
+      background: #f0f0f0;
+      padding: 3px 6px;
+      border-radius: 4px;
+      box-shadow: 1px 1px 0px 0px #ddd;
+      color: #333;
+      font-size: 14px;
+    }
+
+    /* 已上传文件列表样式 */
+    .uploaded_files_ul {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      margin: 0;
+      list-style-type: none;
+    }
+    .uploaded_files_ul li {
+      background: #e9ecef;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 5px 0;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s ease;
+    }
+    .uploaded_files_ul li a {
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+    }
+    .uploaded_files_ul li:hover {
+      background: #dcdcdc;
+    }
+    .uploaded_files_ul li:hover a {
+      color: #0056b3;
+    }
+  </style>
 </head>
 <body>
   <h1>上传新文件</h1>
+  
+  <p>允许的文件类型:</p>
+  <ul class="allow_file_type_ul">
+    {% for ext in allowed_extensions %}
+      <li>*.{{ ext }}</li>
+    {% endfor %}
+  </ul>
+  
   <form method=post enctype=multipart/form-data>
-    <input type=file name=file>
+    <input type=file name=file multiple>
     <input type=submit value=上传>
   </form>
+  
+  {% if files %}
+    <h2>已上传文件</h2>
+    <ul class="uploaded_files_ul">
+      {% for file in files %}
+        <li><a href="{{ url_for('download_file', filename=file) }}">{{ file }}</a></li>
+      {% endfor %}
+    </ul>
+  {% endif %}
 </body>
 </html>
